@@ -1,3 +1,5 @@
+import type { ApiData } from "~types/common"
+
 interface TableRow {
   [key: string]: string // 动态键值对
 }
@@ -7,17 +9,7 @@ interface TableData {
   data: TableRow[]
 }
 
-interface ApiDocument {
-  api: {
-    interfaceType: string
-    accessPath: string
-    description: string
-    requestParameters: { name: string; description: string }[]
-    responseParameters: { name: string; description: string }[]
-  }
-}
-
-function convertTablesToApiDocs(tables: TableData[]): ApiDocument[] {
+function convertTablesToApiDocs(tables: TableData[]): ApiData[] {
   return tables
     .map((table) => {
       const rows = table.data
@@ -26,13 +18,13 @@ function convertTablesToApiDocs(tables: TableData[]): ApiDocument[] {
       ) // 动态字段名
       if (!dynamicKey) return null // 如果未找到动态字段，跳过
 
-      const apiDocument: ApiDocument = {
+      const apiDocument: ApiData = {
         api: {
           interfaceType: "",
           accessPath: "",
           description: "",
-          requestParameters: [],
-          responseParameters: []
+          requestParameters: "",
+          responseParameters: ""
         }
       }
 
@@ -53,17 +45,19 @@ function convertTablesToApiDocs(tables: TableData[]): ApiDocument[] {
             apiDocument.api.description = fieldValue
             break
           case "请求参数":
-            apiDocument.api.requestParameters = parseParameters(fieldValue)
+            // apiDocument.api.requestParameters = parseParameters(fieldValue)
+            apiDocument.api.requestParameters = fieldValue
             break
           case "响应参数":
-            apiDocument.api.responseParameters = parseParameters(fieldValue)
+            // apiDocument.api.responseParameters = parseParameters(fieldValue)
+            apiDocument.api.responseParameters = fieldValue
             break
         }
       }
 
       return apiDocument.api.interfaceType ? apiDocument : null // 只返回有效数据
     })
-    .filter((doc): doc is ApiDocument => doc !== null) // 过滤无效数据
+    .filter((doc): doc is ApiData => doc !== null) // 过滤无效数据
 }
 
 function parseParameters(

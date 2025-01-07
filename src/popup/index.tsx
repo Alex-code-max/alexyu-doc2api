@@ -1,8 +1,8 @@
 import { Button, Form, Input, Message } from "@arco-design/web-react"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import "@arco-design/web-react/dist/css/arco.css"
-import "~popup.css"
+import "./index.css"
 
 import convertTablesToApiDocs from "~utils/convertTablesToApiDocs"
 import filterEmptyInterfaceType from "~utils/filterEmptyInterfaceType"
@@ -14,10 +14,6 @@ const FormItem = Form.Item
 const Popup = () => {
   const formRef = useRef<any>()
 
-  const getTitle = () => {
-    return document.documentElement.outerHTML // 获取整个页面的 HTML
-  }
-
   const getTableDataToApi = (htmlString, folderName: string) => {
     // 创建一个虚拟 DOM 元素
     try {
@@ -27,7 +23,6 @@ const Popup = () => {
       const resultJson = parseMultipleTablesToJSON(table)
       const result = convertTablesToApiDocs(resultJson)
       const res = filterEmptyInterfaceType(result)
-      console.log("res :>> ", res)
       generateJSFilesWithZip(res, folderName ? `${folderName}.zip` : "api.zip")
     } catch (err) {
       Message.error("生成失败")
@@ -45,8 +40,15 @@ const Popup = () => {
 
   const handleHtmlContent = async () => {
     const folderName = formRef.current?.getFieldsValue()?.name
-    console.log("folderName :>> ", folderName)
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    const allowedDomains = ["alidocs.dingtalk.com"]
+    const isAllowed = allowedDomains.some((domain) => tab.url.includes(domain))
+
+    if (!isAllowed) {
+      // 如果不在允许的域名下，可以执行相应的操作
+      Message.error("请在钉钉文档页面使用")
+      return
+    }
     if (tab.id) {
       chrome.scripting.executeScript(
         {
